@@ -1,151 +1,100 @@
 document.addEventListener('DOMContentLoaded', function () {
-  const filters = document.querySelectorAll('.pandascore-league-filter')
-  const matches = document.querySelectorAll('.pandascore-match')
+  const filters = document.querySelectorAll('.pandascore-league-filter');
+  const matches = document.querySelectorAll('.pandascore-match');
+  const specificLeagues = ['LCK', 'LPL', 'LEC', 'LTA', 'LTA South'];
+  const MAX_DISPLAY = 8;
 
-  // Define the specific leagues we're filtering for
-  const specificLeagues = ['LCK', 'LPL', 'LEC', 'LTA', 'LTA South']
-  const ltaLeagues = ['LTA North', 'LTA South']
-  const MAX_DISPLAY = 8
-
-  // Initialize default state: show only main 5 leagues, hide OTHER LEAGUES
   function initializeDefaultState() {
     matches.forEach((match) => {
-      const matchLeague = match.querySelector(
-        '.pandascore-league-container img'
-      )
-
+      const matchLeague = match.querySelector('.pandascore-league-container img');
       if (!matchLeague) {
-        // If no league image, check for placeholder
-        const placeholder = match.querySelector(
-          '.pandascore-league-placeholder'
-        )
+        const placeholder = match.querySelector('.pandascore-league-placeholder');
         if (placeholder) {
-          match.style.display = 'none' // Hide matches without proper league info
+          match.style.display = 'none';
         }
-        return
+        return;
       }
-
-      const matchLeagueName = matchLeague.alt
-
-      // Show matches from the 5 main leagues, hide OTHER LEAGUES
+      const matchLeagueName = matchLeague.alt;
       if (specificLeagues.includes(matchLeagueName)) {
-        match.style.display = 'flex'
+        match.style.display = 'flex';
       } else {
-        match.style.display = 'none'
+        match.style.display = 'none';
       }
-    })
-
-    // Ensure no filters are active initially
-    filters.forEach((f) => f.classList.remove('active'))
+    });
+    filters.forEach((f) => f.classList.remove('active'));
   }
 
-  // Show matches from the 5 main leagues (default state)
   function showMainLeaguesMatches() {
     matches.forEach((match) => {
-      const matchLeague = match.querySelector(
-        '.pandascore-league-container img'
-      )
-
+      const matchLeague = match.querySelector('.pandascore-league-container img');
       if (!matchLeague) {
-        match.style.display = 'none'
-        return
+        match.style.display = 'none';
+        return;
       }
-
-      const matchLeagueName = matchLeague.alt
-
-      // Show only matches from the 5 main leagues
+      const matchLeagueName = matchLeague.alt;
       if (specificLeagues.includes(matchLeagueName)) {
-        console.log(specificLeagues)
-        console.log(matchLeagueName)
-        match.style.display = 'flex'
+        match.style.display = 'flex';
       } else {
-        match.style.display = 'none'
+        match.style.display = 'none';
       }
-    })
-
-    // Enforce max visible per section, then update container visibility
-    enforceDisplayLimit()
-    updateContainerVisibility()
+    });
+    enforceDisplayLimit();
+    updateContainerVisibility();
   }
 
-  // Filter matches for a specific league
   function filterByLeague(selectedLeague) {
     matches.forEach((match) => {
-      const matchLeague = match.querySelector(
-        '.pandascore-league-container img'
-      )
-
+      const matchLeague = match.querySelector('.pandascore-league-container img');
       if (!matchLeague) {
-        match.style.display = 'none'
-        return
+        match.style.display = 'none';
+        return;
       }
-
-      const matchLeagueName = matchLeague.alt
-
+      const matchLeagueName = matchLeague.alt;
       if (selectedLeague === 'OTHER LEAGUES') {
-        // Show matches that are NOT from the specific 5 leagues
         if (specificLeagues.includes(matchLeagueName)) {
-          match.style.display = 'none'
+          match.style.display = 'none';
         } else {
-          match.style.display = 'flex'
+          match.style.display = 'flex';
         }
       } else {
-        // Show matches from the selected specific league only
         if (matchLeagueName === selectedLeague) {
-          match.style.display = 'flex'
+          match.style.display = 'flex';
         } else {
-          match.style.display = 'none'
+          match.style.display = 'none';
         }
       }
-    })
-
-    // Enforce max visible per section, then update container visibility
-    enforceDisplayLimit()
-    updateContainerVisibility()
+    });
+    enforceDisplayLimit();
+    updateContainerVisibility();
   }
 
-  // Update container visibility based on visible matches
   function updateContainerVisibility() {
-    const liveContainer = document.querySelector('.pandascore-live-container')
-    const upcomingContainer = document.querySelector(
-      '.pandascore-upcoming-container'
-    )
-
+    const liveContainer = document.querySelector('.pandascore-live-container');
+    const upcomingContainer = document.querySelector('.pandascore-upcoming-container');
     if (liveContainer) {
-      const liveMatches = liveContainer.querySelectorAll('.pandascore-match')
-      const visibleLiveMatches = Array.from(liveMatches).filter(
-        (match) => match.style.display !== 'none'
-      )
-      liveContainer.style.display =
-        visibleLiveMatches.length > 0 ? 'block' : 'none'
+      const liveMatches = liveContainer.querySelectorAll('.pandascore-match');
+      const visibleLiveMatches = Array.from(liveMatches).filter((match) => match.style.display !== 'none');
+      liveContainer.style.display = visibleLiveMatches.length > 0 ? 'block' : 'none';
     }
-
     if (upcomingContainer) {
-      const upcomingMatches =
-        upcomingContainer.querySelectorAll('.pandascore-match')
-      const visibleUpcomingMatches = Array.from(upcomingMatches).filter(
-        (match) => match.style.display !== 'none'
-      )
-      upcomingContainer.style.display =
-        visibleUpcomingMatches.length > 0 ? 'block' : 'none'
+      const upcomingMatches = upcomingContainer.querySelectorAll('.pandascore-match');
+      const visibleUpcomingMatches = Array.from(upcomingMatches).filter((match) => match.style.display !== 'none');
+      upcomingContainer.style.display = visibleUpcomingMatches.length > 0 ? 'block' : 'none';
     }
   }
 
-  // Enforce max number of visible matches per section
   function enforceDisplayLimit() {
     const applyCap = (selector) => {
-      const container = document.querySelector(selector)
-      if (!container) return
-      const matches = Array.from(
-        container.querySelectorAll('.pandascore-match')
-      )
-      const visible = matches.filter((m) => m.style.display !== 'none')
+      const container = document.querySelector(selector);
+      if (!container) return;
+      const matches = Array.from(container.querySelectorAll('.pandascore-match'));
+      const visible = matches.filter((m) => m.style.display !== 'none');
       visible.forEach((m, idx) => {
-        m.style.display = idx < MAX_DISPLAY ? 'flex' : 'none'
-      })
-    }
-    applyCap('.pandascore-live-container')
-    applyCap('.pandascore-upcoming-container')
+        m.style.display = idx < MAX_DISPLAY ? 'flex' : 'none';
+      });
+    };
+    applyCap('.pandascore-live-container');
+    applyCap('.pandascore-upcoming-container');
   }
 
   // Add click event listeners to filters
@@ -156,21 +105,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (isCurrentlyActive) {
         // Toggle OFF: Return to default state (show main 5 leagues)
-        filters.forEach((f) => f.classList.remove('active'))
-        showMainLeaguesMatches()
+        filters.forEach((f) => f.classList.remove('active'));
+        showMainLeaguesMatches();
       } else {
         // Toggle ON: Filter by selected league
-        filters.forEach((f) => f.classList.remove('active'))
-        filter.classList.add('active')
-        filterByLeague(selectedLeague)
+        filters.forEach((f) => f.classList.remove('active'));
+        filter.classList.add('active');
+        filterByLeague(selectedLeague);
       }
-    })
-  })
+    });
+  });
 
-  // Initialize the default state on page load
-  initializeDefaultState()
+  // Add click-to-detail navigation to each match card
+  matches.forEach((match) => {
+    const matchId = match.getAttribute('data-match-id');
+    if (matchId) {
+      match.style.cursor = 'pointer';
+      match.addEventListener('click', (e) => {
+        if (e.target.closest('button, a')) return;
+        window.location.href = window.location.pathname + '?pandascore_match_id=' + encodeURIComponent(matchId);
+      });
+    }
+  });
 
-  // Enforce max visible per section and update visibility after initialization
-  enforceDisplayLimit()
-  updateContainerVisibility()
-})
+  initializeDefaultState();
+  enforceDisplayLimit();
+  updateContainerVisibility();
+});

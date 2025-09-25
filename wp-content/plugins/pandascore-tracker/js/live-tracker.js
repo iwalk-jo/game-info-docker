@@ -19,9 +19,10 @@ document.addEventListener('DOMContentLoaded', function () {
     return
   }
 
-  const { apiKey, wsMatches } = pandaScoreLiveTracker
+  // Ensure pandaScoreLiveTracker is defined before destructuring
+  const { apiKey, wsMatches } = window.pandaScoreLiveTracker || {}
 
-  if (!apiKey?.trim()) {
+  if (!apiKey || !apiKey.trim()) {
     console.error('[PandaScore] API key is missing or invalid.')
     return
   }
@@ -41,11 +42,11 @@ document.addEventListener('DOMContentLoaded', function () {
   function buildWebSocketUrl(match, useFrames = false) {
     let baseUrl
 
-    if (useFrames && match.frames_url?.length) {
+    if (useFrames && match.frames_url && match.frames_url.length) {
       baseUrl = match.frames_url
-    } else if (!useFrames && match.events_url?.length) {
+    } else if (!useFrames && match.events_url && match.events_url.length) {
       baseUrl = match.events_url
-    } else if (match.frames_url?.length) {
+    } else if (match.frames_url && match.frames_url.length) {
       baseUrl = match.frames_url
     } else {
       // Final fallback to generic frames endpoint
@@ -154,8 +155,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function updateTeamInfo(matchElement, opponents) {
     opponents.forEach((opponent, index) => {
-      const teamName = opponent.opponent?.name || opponent.name || 'NAME'
-      const teamLogo = opponent.opponent?.image_url || opponent.image_url || ''
+      const teamName = (opponent.opponent && opponent.opponent.name) || opponent.name || 'NAME'
+      const teamLogo = (opponent.opponent && opponent.opponent.image_url) || opponent.image_url || ''
 
       // Update team name
       const teamNameElements = matchElement.querySelectorAll(
@@ -289,7 +290,7 @@ document.addEventListener('DOMContentLoaded', function () {
       console.log(`[PandaScore] Connected to match ${match.match_id}`)
 
       // Send recovery request if available
-      if (match.events_url && match.game_ids?.length) {
+      if (match.events_url && match.game_ids && match.game_ids.length) {
         const lastGameId = match.game_ids[match.game_ids.length - 1]
         try {
           socket.send(
@@ -319,7 +320,7 @@ document.addEventListener('DOMContentLoaded', function () {
     socket.onmessage = function (event) {
       try {
         const message = JSON.parse(event.data)
-        if (message?.type === 'hello') return
+        if (message && message.type === 'hello') return
 
         // Trigger result sync for any other message
         fetchMatchResults(match.match_id)
@@ -345,7 +346,7 @@ document.addEventListener('DOMContentLoaded', function () {
       connections.delete(match.match_id)
 
       // Handle specific error codes with smart fallback
-      if (event?.code === 4003) {
+      if (event && event.code === 4003) {
         console.warn(
           `[PandaScore] Events endpoint forbidden for match ${match.match_id} (code: 4003)`
         )
@@ -367,7 +368,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       // Other non-retryable codes
-      if (CONFIG.NON_RETRY_CODES.has(event?.code)) {
+      if (event && CONFIG.NON_RETRY_CODES.has(event.code)) {
         console.log(
           `[PandaScore] Connection closed for match ${match.match_id} (code: ${event.code})`
         )
@@ -409,13 +410,6 @@ document.addEventListener('DOMContentLoaded', function () {
     connections.set(match.match_id, { type: 'polling', timer: pollInterval })
   }
 
-  function stopPollingFallback(matchId) {
-    const connection = connections.get(matchId)
-    if (connection && connection.type === 'polling') {
-      clearInterval(connection.timer)
-      connections.delete(matchId)
-    }
-  }
 
   // Initialize connections for all live matches
   wsMatches.forEach((match) => createConnection(match))
