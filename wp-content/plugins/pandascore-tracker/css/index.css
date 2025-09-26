@@ -22,6 +22,45 @@
   --brand-font-sm: 12px;
   /* Sidebar Sizes */
   --brand-sidebar: 250px;
+  /* Transitions */
+  --transition-speed: 0.2s;
+}
+
+/* Match Card Links */
+.pandascore-match-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition: transform var(--transition-speed) ease-in-out;
+}
+
+.pandascore-match-link:hover {
+  transform: translateY(-2px);
+}
+
+.pandascore-match-link:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--brand-color);
+}
+
+.pandascore-match-link:active {
+  transform: translateY(0);
+}
+
+/* Match Cards */
+.pandascore-match {
+  background-color: var(--brand-container-bg);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  transition: background-color var(--transition-speed) ease-in-out,
+              box-shadow var(--transition-speed) ease-in-out;
+  cursor: pointer;
+}
+
+.pandascore-match:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Animation for live indicator */
@@ -297,13 +336,14 @@
   overflow: hidden;
   overflow-x: scroll; /* Keep horizontal scrolling */
   cursor: grab; /* Visual feedback for draggable area */
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS (legacy, not supported on most modern browsers) */
   touch-action: pan-y; /* Allow vertical page scroll, we handle horizontal drag */
 }
 
 /* While dragging */
 .pandascore-date-filters.is-dragging {
   cursor: grabbing;
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -322,6 +362,7 @@
   font-weight: bold;
   line-height: 1;
   cursor: pointer;
+  -webkit-user-select: none;
   user-select: none;
   display: flex;
   gap: 5px;

@@ -20,6 +20,42 @@ class PandaScore_Tracker_Plugin {
         add_action('admin_init', [$this, 'register_settings']);
         add_shortcode('pandascore_tracker', [$this, 'shortcode_handler']);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_assets']);
+        add_action('init', [$this, 'add_custom_rewrite_rules']);
+        add_filter('template_include', [$this, 'load_custom_template']);
+
+        // Flush rewrite rules on plugin activation
+        register_activation_hook(__FILE__, function() {
+            $this->add_custom_rewrite_rules();
+            flush_rewrite_rules();
+        });
+    }
+
+    public function add_custom_rewrite_rules() {
+        add_rewrite_rule('^match/([0-9a-zA-Z-_]+)/?$', 'index.php?match=$matches[1]', 'top');
+        add_rewrite_tag('%match%', '([0-9a-zA-Z-_]+)');
+    }
+
+    public function load_custom_template($template) {
+        global $wp_query;
+        if (isset($wp_query->query_vars['match']) && $wp_query->query_vars['match']) {
+            // Add WebSocket support for live match updates
+            add_action('wp_enqueue_scripts', function() use ($wp_query) {
+                wp_enqueue_script('pandascore-match-live-updates', plugins_url('js/match-live-updates.js', __FILE__), [], '1.0', true);
+                $api_key = get_option('pandascore_tracker_options')['api_key'] ?? '';
+                $match_param = $wp_query->query_vars['match'];
+                wp_add_inline_script('pandascore-match-live-updates', 
+                    'window.pandascoreMatchId = ' . json_encode($match_param) . '; ' .
+                    'window.pandascoreApiKey = ' . json_encode($api_key) . ';', 
+                    'before'
+                );
+            });
+            
+            $plugin_template = __DIR__ . '/templates/single-match.php';
+            if (file_exists($plugin_template)) {
+                return $plugin_template;
+            }
+        }
+        return $template;
     }
 
     public function enqueue_assets() {
@@ -264,7 +300,12 @@ class PandaScore_Tracker_Plugin {
         $scheduled_at = $match['scheduled_at'] ?? '';
         $is_upcoming = !$is_live && $scheduled_at;
 
-        $html = '<div class="pandascore-match" data-league-id="' . $league_id . '" data-match-id="' . esc_attr($match['id'] ?? '') . ($is_upcoming ? '" data-scheduled-at="' . esc_attr($scheduled_at) : '') . '">';
+        $match_id = esc_attr($match['id'] ?? '');
+        $match_url = esc_url(home_url("match/{$match_id}/"));
+
+        // Wrap the entire match card in a clickable link
+        $html = '<a href="' . $match_url . '" class="pandascore-match-link">';
+        $html .= '<div class="pandascore-match" data-league-id="' . $league_id . '" data-match-id="' . $match_id . ($is_upcoming ? '" data-scheduled-at="' . esc_attr($scheduled_at) : '') . '">';
         $html .= '<div class="pandascore-league-container">';
         $html .= $league_logo ? '<div class="pandascore-league-logo"><img src="' . $league_logo . '" alt="' . $league_name . '" title="' . $league_name . '"></div>'
                              : '<div class="pandascore-league-placeholder" title="' . $league_name . '">' . ($league_name ? $league_name[0] : 'L') . '</div>';
@@ -279,7 +320,7 @@ class PandaScore_Tracker_Plugin {
         if ($is_upcoming) {
             $html .= '<div class="pandascore-time-container"><div class="pandascore-time-badge"><div class="pandascore-time">Loading...</div><div class="pandascore-time-day">Loading...</div></div></div>';
         }
-        $html .= '</div></div>';
+        $html .= '</div></div></a>';
         return $html;
     }
 
