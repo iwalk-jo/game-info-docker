@@ -1,6 +1,7 @@
 <?php
 /**
  * Template for displaying a single league details page.
+ * Displays the details of a single league, including its name, image, and other relevant information.
  *
  * Fetches league data from the PandaScore API using the league ID or slug from the URL.
  */
